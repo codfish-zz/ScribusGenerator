@@ -1,6 +1,6 @@
 import scribus
 
-scribus.openDoc('test.sla')
+scribus.openDoc('Test.sla')
 pdf = scribus.PDFfile()
 pdf.file = 'result.pdf'
 pdf.save()
