@@ -21,7 +21,7 @@ $ python ../ScribusGeneratorCLI.py demo/Nameplate.sla --dataFile demo/Nameplate.
 # Generate result file in Pdf format (result.pdf, need to run with Scribus)
 $ scribus -g -ns -py ../ScribusGeneratorCLI.py Nameplate.sla --dataFile Nameplate.csv --outName result --formatPdf
 
-# Run with xvfb-run if you are running this script on a server system without GUI.
+# Run with xvfb-run if you are using a server system without GUI.
 $ xvfb-run scribus -g -ns -py ../ScribusGeneratorCLI.py Nameplate.sla --dataFile Nameplate.csv --outName result --formatPdf
 ```
 
