@@ -30,7 +30,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 """
 
 import argparse
-import os, sys
+import os
 import traceback
 from ScribusGeneratorBackend import CONST, ScribusGenerator, GeneratorDataObject
 
@@ -143,6 +143,14 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-q",
+    "--imgQuality",
+    type=int,
+    default=CONST.IMG_QUALITY,
+    help="Quality of the generated image file: minimum 1, maximum 100.",
+)
+
+parser.add_argument(
     "-s",
     "--save",
     action="store_true",
@@ -215,6 +223,8 @@ def main():
         format = CONST.FORMAT_JPG
     elif args.formatPdf:
         format = CONST.FORMAT_PDF
+    elif args.formatAll:
+        format = CONST.FORMAT_ALL
 
     # Collect the settings
     dataObject = GeneratorDataObject(
@@ -222,6 +232,7 @@ def main():
         outputDirectory=outDir,
         outputFileName=args.outName,
         outputFormat=format,
+        imgQuality=args.imgQuality,
         keepGeneratedScribusFiles=CONST.TRUE,
         csvSeparator=args.csvDelimiter,
         csvEncoding=args.csvEncoding,

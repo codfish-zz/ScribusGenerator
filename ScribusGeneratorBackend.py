@@ -49,6 +49,9 @@ class CONST:
     FORMAT_SLA = "Scribus"
     FORMAT_JPG = "JPG"
     FORMAT_PDF = "PDF"
+    FORMAT_ALL = "ALL"
+
+    IMG_QUALITY = 60
 
     FILE_EXTENSION_SCRIBUS = "sla"
     FILE_EXTENSION_JPG = "jpg"
@@ -65,29 +68,27 @@ class CONST:
     # Indent the generated SLA code for more readability, aka "XML pretty print".
     # Set to 1 if you want to edit generated SLA manually.
     INDENT_SLA = 1
-    CONTRIB_TEXT = (
-        "\nPowered by ScribusGenerator - https://github.com/codfish-zz/ScribusGenerator/"
-    )
+    CONTRIB_TEXT = "\nPowered by ScribusGenerator - https://github.com/codfish-zz/ScribusGenerator/"
 
     STORAGE_NAME = "ScribusGeneratorDefaultSettings"
 
     # Set to 0 to prevent removal of un-subsituted variables, along with their empty containing itext
     CLEAN_UNUSED_EMPTY_VARS = 1
-    
-    # Set to 0 to keep the separating element before an unused/empty variable, 
+
+    # Set to 0 to keep the separating element before an unused/empty variable,
     # typically a linefeed (<para>) or list syntax token (,;-.)
     REMOVE_CLEANED_ELEMENT_PREFIX = 1
-    
+
     # Set to 0 to replace all tabs and linebreaks in csv data by simple spaces.
     KEEP_TAB_LINEBREAK = 1
-    
-    # Set to any word you'd like to use to trigger a jump to the next data record. 
-    # Using a name similar to the variables %VAR_ ... % will ensure it is cleaned after generation, 
+
+    # Set to any word you'd like to use to trigger a jump to the next data record.
+    # Using a name similar to the variables %VAR_ ... % will ensure it is cleaned after generation,
     # and not show in the final document(s).
     NEXT_RECORD = "%SG_NEXT-RECORD%"
     OUTPUTCOUNT_VAR = "COUNT"
 
-    # Set to the minimum amount of numbers you want to force in the output files name counter. 
+    # Set to the minimum amount of numbers you want to force in the output files name counter.
     # 3 leads to 001,002,...; default is 1.
     OUTPUTCOUNT_FILL = 1
 
@@ -177,18 +178,42 @@ class ScribusGenerator:
 
             storage_element.set("SCRIPT", serial)
 
-            # TODO: bug race condition: check if scribus reloads (or overwrites :/ ) when doc is opened, opt use API to add a script if there's an open doc.
+            # TODO: bug race condition: check if scribus reloads (or overwrites :/ ) when doc is opened,
+            # opt use API to add a script if there's an open doc.
             tree.write(scribus_file)
 
         # Run core functions
-        # (1) Parse data file & store its contents
+        # Parse data file & store its contents
         data = self.parse_data()
 
-        # (2) Generate SLA file(s) from template, using parsed data
+        # Generate SLA file(s) from template, using parsed data
         output_filenames = self.generate_templates(root, data)
 
-        # (3) Export them to PDF (if specified)
-        if self.__dataObject.getOutputFormat() == CONST.FORMAT_PDF:
+        if self.__dataObject.getOutputFormat() == CONST.FORMAT_JPG:
+            # Export them to JPG
+            for output_name in output_filenames:
+                # Build absolute paths for ..
+                # (1) .. SLA file
+                sla_output_file = self.build_file_path(
+                    self.__dataObject.getOutputDirectory(),
+                    output_name,
+                    CONST.FILE_EXTENSION_SCRIBUS,
+                )
+
+                # (2) .. JPG file
+                jpg_output_file = self.build_file_path(
+                    self.__dataObject.getOutputDirectory(),
+                    output_name,
+                    CONST.FILE_EXTENSION_JPG,
+                )
+
+                img_quality = self.__dataObject.getImgQuality()
+
+                self.export_jpg(sla_output_file, jpg_output_file, img_quality)
+                logging.info("JPG file created: %s" % jpg_output_file)
+
+        elif self.__dataObject.getOutputFormat() == CONST.FORMAT_PDF:
+            # Export them to PDF
             for output_name in output_filenames:
                 # Build absolute paths for ..
                 # (1) .. SLA file
@@ -205,12 +230,42 @@ class ScribusGenerator:
                     CONST.FILE_EXTENSION_PDF,
                 )
 
-                # Export template to PDF
                 self.export_pdf(sla_output_file, pdf_output_file)
-
                 logging.info("PDF file created: %s" % pdf_output_file)
 
-        # (4) Remove them (if specified)
+        elif self.__dataObject.getOutputFormat() == CONST.FORMAT_ALL:
+            # Export them to All format
+            for output_name in output_filenames:
+                # Build absolute paths for ..
+                # (1) .. SLA file
+                sla_output_file = self.build_file_path(
+                    self.__dataObject.getOutputDirectory(),
+                    output_name,
+                    CONST.FILE_EXTENSION_SCRIBUS,
+                )
+
+                # (2) .. JPG file
+                jpg_output_file = self.build_file_path(
+                    self.__dataObject.getOutputDirectory(),
+                    output_name,
+                    CONST.FILE_EXTENSION_JPG,
+                )
+
+                # (3) .. PDF file
+                pdf_output_file = self.build_file_path(
+                    self.__dataObject.getOutputDirectory(),
+                    output_name,
+                    CONST.FILE_EXTENSION_PDF,
+                )
+
+                img_quality = self.__dataObject.getImgQuality()
+
+                self.export_jpg(sla_output_file, jpg_output_file, img_quality)
+                self.export_pdf(sla_output_file, pdf_output_file)
+                logging.info("JPG file created: %s" % jpg_output_file)
+                logging.info("PDF file created: %s" % pdf_output_file)
+
+        # Remove them (if specified)
         if (not self.__dataObject.getOutputFormat() == CONST.FORMAT_SLA) and (
             self.__dataObject.getKeepGeneratedScribusFiles() == CONST.FALSE
         ):
@@ -931,7 +986,40 @@ class ScribusGenerator:
 
         return removal_count
 
-    # Part III : PDF EXPORT & CLEANUP
+    # Part III : JPG/PDF EXPORT & CLEANUP
+
+    def export_jpg(self, sla_file: str, jpg_file: str, img_quality: int):
+        import scribus
+
+        # Create filepath (if needed)
+        directory = os.path.dirname(jpg_file)
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        # Export JPG using Scribus API
+        # (1) Open template file
+        scribus.openDoc(sla_file)
+
+        # (2) Determine pages
+        i = 0
+        pages_count = []
+
+        while i < scribus.pageCount():
+            i += 1
+            pages_count.append(i)
+
+        # (3) Setup JPG exporter
+        exporter = scribus.ImageExport()
+        exporter.type = CONST.FORMAT_JPG
+        exporter.name = str(jpg_file)
+        exporter.quality = img_quality
+
+        # (4) Save JPG file
+        exporter.save()
+
+        # (5) Close document
+        scribus.closeDoc()
 
     def export_pdf(self, sla_file: str, pdf_file: str):
         import scribus
@@ -1016,6 +1104,7 @@ class GeneratorDataObject:
         outputDirectory=CONST.EMPTY,
         outputFileName=CONST.EMPTY,
         outputFormat=CONST.EMPTY,
+        imgQuality=CONST.IMG_QUALITY,
         keepGeneratedScribusFiles=CONST.FALSE,
         csvSeparator=CONST.CSV_SEP,
         csvEncoding=CONST.CSV_ENCODING,
@@ -1030,6 +1119,7 @@ class GeneratorDataObject:
         self.__outputDirectory = outputDirectory
         self.__outputFileName = outputFileName
         self.__outputFormat = outputFormat
+        self.__imgQuality = imgQuality
         self.__keepGeneratedScribusFiles = keepGeneratedScribusFiles
         self.__csvSeparator = csvSeparator
         self.__csvEncoding = csvEncoding
@@ -1051,6 +1141,9 @@ class GeneratorDataObject:
 
     def getOutputFileName(self):
         return self.__outputFileName
+
+    def getImgQuality(self):
+        return self.__imgQuality
 
     def getOutputFormat(self):
         return self.__outputFormat
@@ -1094,6 +1187,9 @@ class GeneratorDataObject:
 
     def setOutputFormat(self, outputFormat):
         self.__outputFormat = outputFormat
+
+    def setImgQuality(self, imgQuality):
+        self.__imgQuality = imgQuality
 
     def setKeepGeneratedScribusFiles(self, value):
         self.__keepGeneratedScribusFiles = value
