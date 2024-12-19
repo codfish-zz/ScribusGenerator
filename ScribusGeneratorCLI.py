@@ -6,10 +6,16 @@
 Automatic document generation for Scribus.
 =================
 
+This fork based on the great job of Ekkehard Will and Berteh!
+https://github.com/codfish-zz/ScribusGenerator
+
+Major changes in this fork
+# v3.2 (2024-12-19): Support JPG generating with xvfb-run in command line. 
+# v3.1 (2024-12-17): Support PDF generating with xvfb-run in command line. 
+
 For further information (manual, description, etc.) please visit:
 http://berteh.github.io/ScribusGenerator/
 
-# v3.1 (2024-12-17): Support PDF generating with xvfb-run in command line. 
 # v3.0 (2022-01-12): Port to Python3 for Scribut 1.5.6+, some features (count, fill)
 # v2.0 (2015-12-02): Added features (merge, range, clean, save/load)
 # v1.9 (2015-08-03): Initial command-line support (SLA only, use GUI version to generate PDF)

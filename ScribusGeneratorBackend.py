@@ -5,6 +5,13 @@
 Automatic document generation for Scribus.
 =================
 
+This fork based on the great job of Ekkehard Will and Berteh!
+https://github.com/codfish-zz/ScribusGenerator
+
+Major changes in this fork
+# v4.2 (2024-12-19): Support JPG generating with xvfb-run in command line. 
+# v4.1 (2024-12-17): Support PDF generating with xvfb-run in command line. 
+
 For further information (manual, description, etc.) please visit:
 http://berteh.github.io/ScribusGenerator/
 
@@ -44,7 +51,7 @@ class CONST:
     EMPTY = ""
 
     APP_NAME = "Scribus Generator"
-    APP_VERSION = "4.0.0"
+    APP_VERSION = "4.2.0"
 
     FORMAT_SLA = "Scribus"
     FORMAT_JPG = "JPG"

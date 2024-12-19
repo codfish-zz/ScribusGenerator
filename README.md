@@ -18,6 +18,9 @@ $ cd demo
 # Generate result file in Scribus format (result.sla)
 $ python ../ScribusGeneratorCLI.py demo/Nameplate.sla --dataFile demo/Nameplate.csv --outName result
 
+# Generate result file in Jpg format (result.jpg, need to run with Scribus)
+$ scribus -g -ns -py ../ScribusGeneratorCLI.py Nameplate.sla --dataFile Nameplate.csv --outName result --formatJpg
+
 # Generate result file in Pdf format (result.pdf, need to run with Scribus)
 $ scribus -g -ns -py ../ScribusGeneratorCLI.py Nameplate.sla --dataFile Nameplate.csv --outName result --formatPdf
 
