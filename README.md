@@ -7,6 +7,24 @@ Mail-Merge-like extension to Scribus, to generate Scribus and pdf documents auto
 
 Open source high-quality pdf template and mail-merge alternative. Your imagination is the limit for creating beautiful yearbooks, personalised weedings invitations, game cards decks, clubs rosters, art or work portfolio and [many more](https://github.com/berteh/ScribusGenerator/wiki#gallery-of-examples--some-templates).
 
+This fork based on the great job of Ekkehard Will and Berteh!
+
+Major changes in this fork
+-------
+- Generate result file in PDF format. (Need to run with Scribus)
+```
+$ cd demo
+
+# Generate result file in Scribus format (result.sla)
+$ python ../ScribusGeneratorCLI.py demo/Nameplate.sla --dataFile demo/Nameplate.csv --outName result
+
+# Generate result file in Pdf format (result.pdf, need to run with Scribus)
+$ scribus -g -ns -py ../ScribusGeneratorCLI.py Nameplate.sla --dataFile Nameplate.csv --outName result --formatPdf
+
+# Run with xvfb-run if you are using a server system without GUI.
+$ xvfb-run scribus -g -ns -py ../ScribusGeneratorCLI.py Nameplate.sla --dataFile Nameplate.csv --outName result --formatPdf
+```
+
 What is Scribus Generator?
 -------
 
